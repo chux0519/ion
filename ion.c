@@ -70,7 +70,7 @@ void buf_test() {
     assert(test_buf == NULL);
 }
 
-typedef enum TokenKind {
+typedef enum {
     TOKEN_INT = 128,
     TOKEN_NAME
     // ...
