@@ -16,6 +16,19 @@ day2开始了第一行代码，在视频中，了解到c99的一些标准，记�
     
     > 使用头文件`stdarg.h`中的宏，另外在宏的定义中，可以使用`_VA_ARGS__`传递可变参数([参考](http://www.cnblogs.com/alexshi/archive/2012/03/09/2388453.html))。
 
+- `switch` 和 `if`
+
+    在lexer的部分，包含了很长部分的`switch`分支，不用`if`和`isalpha`之类的函数实现。考虑的原因是，lexer多数是性能瓶颈，使用switch可以让编译器进行优化。
+
+### day3
+    
+    继续编码，实现部分parser。这一部分介绍了C编程过程中的三个大杀器。
+    
+- 弹性缓冲区(stretchy buffer)
+- 指针散列表(uintptr hash tables: uintptr -> uintptr key-value mapping)
+- 内部字符串表(string intern table)
+
+    > lua的内部实现也应用了这个技术
 
 ## 参考资料
 
