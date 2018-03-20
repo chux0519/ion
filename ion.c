@@ -54,19 +54,20 @@ void *buf__grow(const void *buf, size_t new_len, size_t elem_size) {
 }
 
 void buf_test() {
-    int *buf = NULL;
+    int *test_buf = NULL;
     enum {
         N = 1024
     };
     for (int i = 0; i < N; ++i) {
-        buf_push(buf, i);
+        buf_push(test_buf, i);
     }
-    assert(buf_len(buf) == N);
+    assert(buf_len(test_buf) == N);
 
-    for (int j = 0; j < buf_len(buf); ++j) {
-        assert(buf[j] == j);
+    for (int j = 0; j < buf_len(test_buf); ++j) {
+        assert(test_buf[j] == j);
     }
-    buf_free(buf);
+    buf_free(test_buf);
+    assert(test_buf == NULL);
 }
 
 typedef enum TokenKind {
