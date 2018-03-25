@@ -30,6 +30,14 @@ day2开始了第一行代码，在视频中，了解到c99的一些标准，记�
 
     > lua的内部实现也应用了这个技术
 
+## day4
+
+检验长度时，考虑到表达式本身的overflow
+
+```c
+(SIZE_MAX - 1) / 2 > buf_cap(buf)
+```
+
 ## 参考资料
 
 CompilerConstruction第二章节，注意第9页有一处错误，在bitwsie项目中有说明。

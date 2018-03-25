@@ -49,10 +49,12 @@ typedef struct BufHdr {
 
 #define buf_len(b) ((b) ? buf__hdr(b)->len : 0)
 #define buf_cap(b) ((b) ? buf__hdr(b)->cap : 0)
+#define buf_end(b) ((b) + buf_len(b))
 #define buf_push(b, x) (buf__fit(b, 1), (b)[buf__hdr(b)->len++] = (x))
 #define buf_free(b) ((b) ? (free(buf__hdr(b)), (b) = NULL) : 0)
 
 void *buf__grow(const void *buf, size_t new_len, size_t elem_size) {
+    assert((SIZE_MAX - 1) / 2 > buf_cap(buf));
     size_t new_cap = MAX(1 + 2 * buf_cap(buf), new_len);
     size_t new_size = new_cap * elem_size + offsetof(BufHdr, buf);
     BufHdr *new_hdr;
@@ -86,21 +88,21 @@ void buf_test() {
 typedef struct InternStr {
     size_t len;
     const char *str;
-} InternStr;
+} Intern;
 
-static InternStr *interns;
+static Intern *interns;
 
 const char *str_intern_range(const char *start, const char *end) {
     size_t len = end - start;
-    for (size_t i = 0; i < buf_len(interns); ++i) {
-        if (interns[i].len == len && strncmp(interns[i].str, start, len) == 0) {
-            return interns[i].str;
+    for (Intern *it = interns; it != buf_end(interns); it++) {
+        if (it->len == len && strncmp(it->str, start, len) == 0) {
+            return it->str;
         }
     }
     char *str = malloc(len + 1);
     memcpy(str, start, len);
     str[len] = 0;
-    InternStr new_intern_str = {len, str};
+    Intern new_intern_str = {len, str};
     buf_push(interns, new_intern_str);
     return new_intern_str.str;
 }
@@ -125,24 +127,34 @@ typedef enum {
     // ...
 } TokenKind;
 
-const char *token_kind_name(TokenKind kind) {
-    static char buf[256];
+size_t copy_token_kind_str(char *dest, size_t dest_size, TokenKind kind) {
+    size_t n = 0;
     switch (kind) {
+        case 0:
+            n = snprintf(dest, dest_size, "end of file");
+            break;
         case TOKEN_INT:
-            sprintf(buf, "integer");
+            n = snprintf(dest, dest_size, "integer");
             break;
         case TOKEN_NAME:
-            sprintf(buf, "name");
+            n = snprintf(dest, dest_size, "name");
             break;
         default:
             if (kind < 128 && isprint(kind)) {
-                sprintf(buf, "%c", kind);
+                n = snprintf(dest, dest_size, "%c", kind);
             } else {
-                sprintf(buf, "ascii %d", kind);
+                n = snprintf(dest, dest_size, "ascii %d", kind);
             }
 
             break;
     }
+    return n;
+}
+
+const char *token_kind_str(TokenKind kind) {
+    static char buf[256];
+    size_t n = copy_token_kind_str(buf, sizeof(buf), kind);
+    assert(n + 1 >= sizeof(buf));
     return buf;
 }
 
@@ -315,7 +327,7 @@ bool expect_token(TokenKind kind) {
         next_token();
         return true;
     } else {
-        fatal("expect token %s, got %s", token_kind_name(kind), token_kind_name(token.kind));
+        fatal("expect token %s, got %s", token_kind_str(kind), token_kind_str(token.kind));
         return false;
     }
 }
@@ -339,7 +351,7 @@ int parse_expr3() {
         expect_token(')');
         return val;
     } else {
-        fatal("expected integer or (, got %s", token_kind_name(token.kind));
+        fatal("expected integer or (, got %s", token_kind_str(token.kind));
         return 0;
     }
 }
@@ -398,10 +410,10 @@ void parse_test() {
 #define TEST_EXPR(x) assert(parse_expr_str(#x) == (x))
     TEST_EXPR(1);
     TEST_EXPR((1));
-    TEST_EXPR(1+2-3);
-    TEST_EXPR(2*3+4*5);
-    TEST_EXPR(2*(3+4)*5);
 #undef TEST_EXPR
+    assert(parse_expr_str("1+2-3") == 0);
+    assert(parse_expr_str("2*3+4*5") == 26);
+    assert(parse_expr_str("2*(3+4)*5") == 70);
 }
 
 int main() {
