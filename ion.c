@@ -293,24 +293,8 @@ void print_token(Token token) {
 }
 
 
-void lex_test() {
-    char *source = "+()_HELLO201_,1234_994,FOO,BAR,FOO";
-    stream = source;
-    next_token();
-    while (token.kind) {
-        print_token(token);
-        next_token();
-    }
-}
-
-// parse
-
 bool is_token(TokenKind kind) {
     return token.kind == kind;
-}
-
-bool is_token_name(const char *name) {
-    return token.kind == TOKEN_NAME && token.name == name;
 }
 
 bool match_token(TokenKind kind) {
@@ -332,6 +316,30 @@ bool expect_token(TokenKind kind) {
     }
 }
 
+#define assert_token(x) assert(match_token(x))
+#define assert_token_name(x) assert(token.name == str_intern(x) && match_token(TOKEN_NAME))
+#define assert_token_int(x) assert(token.val == (x) && match_token(TOKEN_INT))
+#define assert_token_eof() assert(is_token(0))
+
+void lex_test() {
+    init_stream("+()_HELLO201_,1234_994,FOO,BAR,FOO");
+    assert_token('+');
+    assert_token('(');
+    assert_token(')');
+    assert_token_name("_HELLO201_");
+    assert_token(',');
+    assert_token_int(1234);
+    assert_token_name("_994");
+    assert_token(',');
+    assert_token_name("FOO");
+    assert_token(',');
+    assert_token_name("BAR");
+    assert_token(',');
+    assert_token_name("FOO");
+    assert_token_eof();
+}
+
+// parse
 /*
  * expr3 = INT | '(' expr ')'
  * expr2 = [-] expr3
